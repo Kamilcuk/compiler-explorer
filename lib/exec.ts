@@ -215,7 +215,12 @@ export async function executeDirect(
     });
 }
 
-export function getNsJailCfgFilePath(configName: string): string {
+export function getNsJailCfgFilePath(configName: string, compilerType?: string): string {
+    if (compilerType) {
+        const specificKey = `nsjail.config.${configName}.${compilerType}`;
+        const specificPath = execProps<string>(specificKey);
+        if (specificPath !== undefined) return specificPath;
+    }
     const propKey = `nsjail.config.${configName}`;
     const configPath = execProps<string>(propKey);
     if (configPath === undefined) {
@@ -254,7 +259,7 @@ export function getNsJailOptions(
     options: ExecutionOptions,
 ): NsJailOptions {
     options = {...options};
-    const jailingOptions = ['--config', getNsJailCfgFilePath(configName)];
+    const jailingOptions = ['--config', getNsJailCfgFilePath(configName, options.compilerType)];
 
     if (options.timeoutMs) {
         const ExtraWallClockLeewayMs = 1000;

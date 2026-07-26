@@ -214,6 +214,7 @@ export class LocalExecutionEnvironment implements IExecutionEnvironment {
                 input: executeParameters.stdin,
                 customCwd: homeDir,
                 appHome: homeDir,
+                compilerType: executeParameters.compilerType,
             };
 
             if (this.useSanitizerEnvHints) {

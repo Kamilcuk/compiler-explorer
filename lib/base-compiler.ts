@@ -523,6 +523,7 @@ export class BaseCompiler {
             maxErrorOutput: this.env.ceProps('max-error-output', 5000),
             env,
             wrapper: this.compilerWrapper,
+            compilerType: this.compiler.compilerType,
         };
     }
 
@@ -3236,6 +3237,7 @@ export class BaseCompiler {
             ldPath: [],
             env: {},
             runtimeTools: executeParameters.runtimeTools || [],
+            compilerType: this.compiler.compilerType,
         };
 
         const key = this.getCacheKey(source, options, backendOptions, filters, tools, libraries, files);

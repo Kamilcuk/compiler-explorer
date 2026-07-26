@@ -1,9 +1,30 @@
-[![Build Status](https://github.com/compiler-explorer/compiler-explorer/workflows/Compiler%20Explorer/badge.svg)](https://github.com/compiler-explorer/compiler-explorer/actions?query=workflow%3A%22Compiler+Explorer%22)
-[![codecov](https://codecov.io/gh/compiler-explorer/compiler-explorer/branch/main/graph/badge.svg)](https://codecov.io/gh/compiler-explorer/compiler-explorer)
+# Compiler Explorer — Yio Edition
 
-[![logo](public/logos/assembly.png)](https://godbolt.org/)
+This is a fork of [Compiler Explorer](https://github.com/compiler-explorer/compiler-explorer) customized for the
+[Yio](https://github.com/kcukrowski/yio) C library.
 
-# Compiler Explorer
+**Customizations on this branch:**
+- Bash language support (compiler class, language definition, config)
+- C compiler config replaced with Yio GCC compiler definitions
+- Custom nsjail sandbox configuration for compilation and execution
+- Stripped to only C and Bash languages
+- Deployment infrastructure in `MYSTUFF/` (see below)
+
+## Deployment
+
+The `MYSTUFF/` directory contains everything needed to run this fork in a QEMU VM:
+
+```bash
+cd MYSTUFF
+./manage.sh start         # Start the VM
+./manage.sh ansible playbooks/provision.yml   # Full provision
+```
+
+See [MYSTUFF/README.md](MYSTUFF/README.md) for details.
+
+---
+
+# Upstream: Compiler Explorer
 
 Compiler Explorer is an interactive compiler exploration website. Edit code in C, C++, C#, F#, Rust, Go, D, Haskell, Swift, Pascal,
 [ispc](https://ispc.github.io/), Python, Java, or any of the other

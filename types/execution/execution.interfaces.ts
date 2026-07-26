@@ -96,4 +96,5 @@ export type ExecutableExecutionOptions = {
     ldPath: string[];
     env: Record<string, string>;
     runtimeTools?: ConfiguredRuntimeTools;
+    compilerType?: string;
 };

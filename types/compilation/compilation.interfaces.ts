@@ -275,6 +275,8 @@ export type ExecutionOptions = {
     // Stdin
     input?: any;
     killChild?: () => void;
+    // Compiler type key (e.g., 'bash', 'gcc') for per-compiler nsjail config overrides
+    compilerType?: string;
 };
 
 export type ExecutionOptionsWithEnv = ExecutionOptions & {env: Record<string, string>};

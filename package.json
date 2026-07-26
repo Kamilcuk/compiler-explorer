@@ -161,7 +161,7 @@
     "sentry": "npx -p @sentry/cli sentry-cli",
     "update-browserslist": "npx update-browserslist-db@latest",
     "prepare": "husky",
-    "ts-compile": "tsc",
+    "ts-compile": "tsc --incremental",
     "ts-check": "npm-run-all ts-check:*",
     "ts-check:backend": "tsc -p ./tsconfig.backend.json --noEmit",
     "ts-check:frontend": "tsc -p ./tsconfig.frontend.json --noEmit",

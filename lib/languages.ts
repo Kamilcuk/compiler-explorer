@@ -138,6 +138,17 @@ const definitions: Record<LanguageKey, LanguageDefinition> = {
         previewFilter: null,
         monacoDisassembly: null,
     },
+    bash: {
+        name: 'Bash',
+        monaco: 'shell',
+        extensions: ['.bash'],
+        alias: ['shell'],
+        logoFilename: 'bash.svg',
+        logoFilenameDark: null,
+        formatter: null,
+        previewFilter: null,
+        monacoDisassembly: null,
+    },
     c: {
         name: 'C',
         monaco: 'nc',
