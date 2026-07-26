@@ -1,0 +1,30 @@
+#cloud-config
+ssh_pwauth: false
+disable_root: true
+ssh_authorized_keys:
+  - $SSH_KEY
+users:
+  - name: ce
+    ssh_authorized_keys:
+      - $SSH_KEY
+    shell: /bin/bash
+    lock_passwd: true
+  - name: admin2
+    ssh_authorized_keys:
+      - $SSH_KEY
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    groups: [sudo]
+    shell: /bin/bash
+    lock_passwd: true
+mounts:
+  - [ godbolt, /mnt/compiler-explorer, 9p, "trans=virtio,version=9p2000.L,ro,_netdev", "0", "0" ]
+runcmd:
+  - set -x
+  - modprobe 9pnet_virtio
+  - mkdir -vp /mnt/compiler-explorer
+  - mount -a
+  - systemctl enable --now ssh
+  - systemctl restart ssh
+  - systemctl status ssh --no-pager
+  - ufw disable
+  - set +x

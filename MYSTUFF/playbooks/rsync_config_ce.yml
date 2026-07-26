@@ -1,0 +1,13 @@
+---
+- name: Rsync config only (no restart)
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - vars/common.yml
+
+  tasks:
+    - name: Sync config files only
+      ansible.builtin.include_tasks:
+        file: tasks/sync_config_ce.yml

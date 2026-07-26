@@ -1,0 +1,6 @@
+ce_dir: /opt/compiler-explorer
+ce_source_dir: /mnt/compiler-explorer
+ce_branch: yio
+ce_user: ce
+ce_uid: 10240
+ce_gid: 10240

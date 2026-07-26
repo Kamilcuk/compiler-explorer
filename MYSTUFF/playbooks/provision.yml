@@ -1,0 +1,142 @@
+---
+- name: Provision Compiler Explorer
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - vars/common.yml
+
+  vars:
+    apt_packages:
+      # nsjail and yio dependencies
+      - libprotobuf32t64
+      - libnl-route-3-200
+      - curl
+      - ca-certificates
+      - git
+      - gcc
+      - g++
+      - clang
+      - gcc-arm-none-eabi
+      - libstdc++-arm-none-eabi-newlib
+      - libnewlib-arm-none-eabi
+      - sdcc
+      - sdcc-ucsim
+      - gcc-15-plugin-dev
+      - libdfp-dev
+      - libclang-dev
+      - llvm-dev
+      - autoconf
+      - bison
+      - flex
+      - libtool
+      - pkg-config
+      - protobuf-compiler
+      - libprotobuf-dev
+      - libnl-route-3-dev
+      - build-essential
+      - make
+      - cmake
+      - ninja-build
+      - python3
+      - python3-jinja2
+      - libunistring-dev
+      # for nsjail cgroup setup
+      - cgroup-tools
+      # for nsjail AppArmor profile (unprivileged user namespaces)
+      - apparmor-utils
+
+  tasks:
+    - name: Install packages
+      ansible.builtin.apt:
+        name: "{{ apt_packages }}"
+        state: present
+        update_cache: true
+        install_recommends: false
+
+    - name: Install nsjail (build from source)
+      ansible.builtin.include_tasks:
+        file: tasks/install_nsjail.yml
+
+    - name: Create /dev/null_ce device node for sandbox
+      ansible.builtin.include_tasks:
+        file: tasks/null_ce.yml
+
+    - name: Remove ubuntu user
+      ansible.builtin.user:
+        name: ubuntu
+        state: absent
+        remove: true
+
+    - name: Remove admin user
+      ansible.builtin.user:
+        name: admin
+        state: absent
+        remove: true
+
+    - name: Install Node.js 22.23.1 from binary
+      ansible.builtin.unarchive:
+        src: https://nodejs.org/dist/v22.23.1/node-v22.23.1-linux-x64.tar.xz
+        dest: /usr/local
+        extra_opts: ['--strip-components=1', '--no-same-owner']
+        remote_src: true
+        creates: /usr/local/bin/node
+
+    - name: Configure cgroups
+      ansible.builtin.include_tasks:
+        file: tasks/cgroups.yml
+
+    - name: Configure git safe directories (system-wide)
+      ansible.builtin.command:
+        cmd: "git config --system --add safe.directory {{ item }}"
+      loop:
+        - /mnt/compiler-explorer/libs/yio
+        - "{{ ce_dir }}"
+        - "{{ ce_source_dir }}"
+
+    - name: Create compiler explorer directory
+      ansible.builtin.file:
+        path: "{{ ce_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Clone CE from local 9p mount
+      ansible.builtin.git:
+        repo: "file://{{ ce_source_dir }}"
+        dest: "{{ ce_dir }}"
+        version: "{{ ce_branch }}"
+        depth: 1
+        single_branch: true
+        force: true
+
+    - name: Create storage directory
+      ansible.builtin.file:
+        path: "{{ ce_dir }}/lib/storage/data"
+        state: directory
+        mode: "0755"
+
+    - name: Create systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/godbolt.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Compiler Explorer
+          [Service]
+          User={{ ce_user }}
+          Group={{ ce_user }}
+          WorkingDirectory={{ ce_dir }}
+          Environment=NODE_ENV=production
+          ExecStart=/usr/local/bin/node out/dist/app.js --port 10240 --host 0.0.0.0 --static ./out/webpack/static
+          Restart=always
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Deploy/update CE (build + start + wait)
+      ansible.builtin.include_tasks:
+        file: tasks/deploy_ce.yml

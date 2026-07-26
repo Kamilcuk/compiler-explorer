@@ -1,0 +1,23 @@
+---
+- name: Quick config update (no rebuild)
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - vars/common.yml
+
+  tasks:
+    - name: Stop godbolt service
+      ansible.builtin.systemd:
+        name: godbolt
+        state: stopped
+      ignore_errors: true
+
+    - name: Sync config files only
+      ansible.builtin.include_tasks:
+        file: tasks/sync_config_ce.yml
+
+    - name: Restart godbolt and wait for healthy
+      ansible.builtin.include_tasks:
+        file: tasks/restart_ce.yml

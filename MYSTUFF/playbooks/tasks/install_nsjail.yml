@@ -1,0 +1,41 @@
+---
+- name: Install nsjail build dependencies
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - autoconf
+      - bison
+      - flex
+      - libtool
+      - pkg-config
+      - protobuf-compiler
+      - libprotobuf-dev
+      - libnl-route-3-dev
+      - libnl-3-dev
+    state: present
+    update_cache: true
+
+- name: Clone nsjail
+  ansible.builtin.git:
+    repo: https://github.com/compiler-explorer/nsjail.git
+    version: ce
+    dest: /tmp/nsjail
+    depth: 1
+    recursive: true
+
+- name: Build nsjail
+  ansible.builtin.command:
+    cmd: make -j{{ ansible_facts['processor_vcpus'] | default(2) }} USER_DEFINES="-Wno-error=extra"
+    chdir: /tmp/nsjail
+
+- name: Install nsjail binary
+  ansible.builtin.copy:
+    src: /tmp/nsjail/nsjail
+    dest: /bin/nsjail
+    remote_src: true
+    mode: "0755"
+
+- name: Cleanup nsjail source
+  ansible.builtin.file:
+    path: /tmp/nsjail
+    state: absent

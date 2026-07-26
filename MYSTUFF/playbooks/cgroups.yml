@@ -1,0 +1,13 @@
+---
+- name: Provision cgroups
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars_files:
+    - vars/common.yml
+
+  tasks:
+    - name: Include cgroups tasks
+      ansible.builtin.include_tasks:
+        file: tasks/cgroups.yml

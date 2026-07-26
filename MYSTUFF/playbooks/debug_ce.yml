@@ -1,0 +1,33 @@
+---
+- name: Enable debug mode in godbolt service
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Add --debug flag to godbolt ExecStart
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/system/godbolt.service
+        regexp: '^ExecStart=.*'
+        line: 'ExecStart=/usr/local/bin/node out/dist/app.js --debug --port 10240 --host 0.0.0.0 --static ./out/webpack/static'
+        backup: true
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart godbolt
+      ansible.builtin.systemd:
+        name: godbolt
+        state: restarted
+        daemon_reload: true
+
+    - name: Wait for godbolt to be ready
+      ansible.builtin.uri:
+        url: http://localhost:10240/
+        method: GET
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 30
+      delay: 2

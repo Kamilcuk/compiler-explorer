@@ -1,0 +1,11 @@
+---
+# Sync config/scripts/assets from source to deployment directory.
+#
+# Expects vars: ce_dir, ce_source_dir
+
+- name: Sync config files only
+  ansible.builtin.shell:
+    cmd: |
+      set -e
+      cd "{{ ce_source_dir }}"
+      git ls-files -s -z 'etc/config/' 'etc/nsjail/' 'etc/scripts/' 'examples/' 'public/logos/' | awk -v RS='\0' -v ORS='\0' '!/^120000/ {print $4}' | rsync -aic --ignore-missing-args --files-from=- --from0 . "{{ ce_dir }}/"

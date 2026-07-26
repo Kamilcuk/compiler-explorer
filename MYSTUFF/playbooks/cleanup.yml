@@ -1,0 +1,25 @@
+---
+- name: Cleanup Compiler Explorer deployment for reprovision
+  hosts: all
+  become: true
+
+  vars_files:
+    - vars/common.yml
+
+  tasks:
+    - name: Stop godbolt service
+      ansible.builtin.systemd:
+        name: godbolt
+        state: stopped
+      ignore_errors: true
+
+    - name: Disable godbolt service
+      ansible.builtin.systemd:
+        name: godbolt
+        enabled: false
+      ignore_errors: true
+
+    - name: Remove deployment directory
+      ansible.builtin.file:
+        path: "{{ ce_dir }}"
+        state: absent

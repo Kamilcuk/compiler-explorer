@@ -1,0 +1,45 @@
+---
+# Wait for Godbolt HTTP service to return 200 OK.
+#
+# On failure, prints `journalctl -u godbolt --no-pager` output
+# before failing the playbook.
+#
+# Parameters (all optional):
+#   wait_url      — URL to probe (default: http://localhost:10240/)
+#   wait_retries  — number of retries (default: 60)
+#   wait_delay    — seconds between retries (default: 1)
+
+- name: "Wait for Godbolt to be healthy ({{ wait_retries | default(60) }} × {{ wait_delay | default(1) }}s)"
+  block:
+    - name: Probe Godbolt health endpoint
+      ansible.builtin.uri:
+        url: "{{ wait_url | default('http://localhost:10240/') }}"
+        status_code: 200
+      register: _godbolt_health
+      until: _godbolt_health.status == 200
+      retries: "{{ wait_retries | default(60) }}"
+      delay: "{{ wait_delay | default(1) }}"
+
+  rescue:
+    - name: Collect godbolt journal
+      ansible.builtin.command:
+        cmd: journalctl -u godbolt -n 100 --no-pager
+      register: _godbolt_journal
+      ignore_errors: true
+
+    - name: Print godbolt journal
+      ansible.builtin.debug:
+        var: _godbolt_journal.stdout_lines
+      when: _godbolt_journal.stdout_lines | length > 0
+
+    - name: Print godbolt stderr
+      ansible.builtin.debug:
+        var: _godbolt_journal.stderr_lines
+      when: _godbolt_journal.stderr_lines | length > 0
+
+    - name: Fail with journal context
+      ansible.builtin.fail:
+        msg: >-
+          Godbolt failed to become healthy after
+          {{ wait_retries | default(60) }} attempts.
+          See journal output above.

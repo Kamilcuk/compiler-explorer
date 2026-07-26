@@ -1,0 +1,10 @@
+---
+- name: Install nsjail
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Install nsjail (build from source + setuid root)
+      ansible.builtin.include_tasks:
+        file: tasks/install_nsjail.yml

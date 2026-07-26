@@ -1,0 +1,31 @@
+---
+- name: Deploy ce-cgroups systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/ce-cgroups.service
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Create Compiler Explorer cgroups
+      Before=godbolt.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=true
+      User=root
+      ExecStart=/usr/bin/cgcreate -a {{ ce_user }}:{{ ce_user }} -g memory,pids,cpu:ce-compile
+      ExecStart=/usr/bin/cgcreate -a {{ ce_user }}:{{ ce_user }} -g memory,pids,cpu:ce-sandbox
+      ExecStart=/bin/chown {{ ce_user }}:root /sys/fs/cgroup/cgroup.procs
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Enable ce-cgroups service (runs on boot)
+  ansible.builtin.systemd:
+    name: ce-cgroups
+    enabled: true
+    daemon_reload: true
+
+- name: Start ce-cgroups service (creates cgroups now)
+  ansible.builtin.systemd:
+    name: ce-cgroups
+    state: started

@@ -1,0 +1,4 @@
+# Ignore everything — libraries are mounted into the VM via 9p
+*
+*/
+!.gitignore

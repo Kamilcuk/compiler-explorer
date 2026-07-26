@@ -1,0 +1,42 @@
+---
+- name: Setup AppArmor for unprivileged user namespaces
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Install apparmor-utils
+      ansible.builtin.apt:
+        name: apparmor-utils
+        state: present
+        update_cache: true
+        install_recommends: false
+
+    - name: Set sysctl to allow unprivileged user namespace operations
+      ansible.builtin.sysctl:
+        name: kernel.apparmor_restrict_unprivileged_userns
+        value: "0"
+        state: present
+        reload: true
+
+    - name: Deploy nsjail AppArmor profile
+      ansible.builtin.copy:
+        dest: /etc/apparmor.d/usr.bin.nsjail
+        mode: "0644"
+        content: |
+          #include <tunables/global>
+
+          /bin/nsjail flags=(unconfined) {
+          userns,
+          }
+
+    - name: Load nsjail AppArmor profile
+      ansible.builtin.command:
+        cmd: apparmor_parser -r /etc/apparmor.d/usr.bin.nsjail
+      register: aa_result
+      failed_when: aa_result.rc != 0 and aa_result.stderr is not search('already loaded')
+      changed_when: aa_result.rc == 0
+
+    - name: Create /dev/null_ce device node for sandbox
+      ansible.builtin.include_tasks:
+        file: tasks/null_ce.yml

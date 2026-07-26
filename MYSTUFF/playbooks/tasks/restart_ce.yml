@@ -1,0 +1,16 @@
+---
+# Restart godbolt service and wait for it to become healthy.
+#
+# Expects vars: (none required; optional: wait_retries, wait_delay)
+
+- name: Restart godbolt service
+  ansible.builtin.systemd:
+    name: godbolt
+    state: restarted
+
+- name: Wait for Godbolt to be healthy
+  ansible.builtin.include_tasks:
+    file: tasks/wait_for_godbolt.yml
+  vars:
+    wait_retries: 60
+    wait_delay: 1

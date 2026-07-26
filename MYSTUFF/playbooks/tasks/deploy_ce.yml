@@ -1,0 +1,46 @@
+---
+# Common tasks for deploying/updating CE source.
+#
+# Used by both provision.yml (full setup) and config_ce.yml (update-only).
+#
+# Expects vars: ce_dir, ce_source_dir, ce_branch, ce_user, ce_gid
+
+- name: Stop godbolt service before modifications
+  ansible.builtin.systemd:
+    name: godbolt
+    state: stopped
+  ignore_errors: true
+
+- name: Update CE source from fork
+  ansible.builtin.shell:
+    cmd: "git fetch origin {{ ce_branch }} && git reset --hard origin/{{ ce_branch }}"
+    chdir: "{{ ce_dir }}"
+
+- name: Sync tracked files from 9p mount
+  ansible.builtin.shell:
+    cmd: |
+      set -e
+      cd "{{ ce_source_dir }}"
+      git ls-files -s -z | awk -v RS='\0' -v ORS='\0' '!/^120000/ {print $4}' | rsync -aic --files-from=- --from0 . "{{ ce_dir }}/"
+
+- name: Configure git safe directories (system-wide)
+  ansible.builtin.command:
+    cmd: "git config --system --add safe.directory {{ ce_dir }}"
+  changed_when: false
+
+- name: Run make prebuild (npm ci + webpack + ts-compile + scripts)
+  ansible.builtin.shell:
+    cmd: make prebuild
+    chdir: "{{ ce_dir }}"
+
+- name: Create compiler cache directory
+  ansible.builtin.file:
+    path: "{{ ce_dir }}/out/compiler-cache"
+    state: directory
+    owner: "{{ ce_user }}"
+    group: "{{ ce_user }}"
+    mode: "0755"
+
+- name: Restart godbolt and wait for healthy
+  ansible.builtin.include_tasks:
+    file: tasks/restart_ce.yml

@@ -1,0 +1,10 @@
+# VM disk images
+*.qcow2
+*.img
+*.iso
+# Generated cloud-init (output of envsubst)
+vm/cloud-init.yml
+vm/seed.iso
+# QEMU sockets
+vm/qemu-monitor.sock
+vm/qemu-serial.sock
